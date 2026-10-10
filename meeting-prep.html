@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173a36">
+  <title>Client Meeting Prep | Angela Ng</title>
+  <style>
+    :root { color-scheme: light; --ink:#173a36; --muted:#52615c; --paper:#f6f4ee; --card:#fffefa; --line:#deded5; --accent:#bf7047; --green:#dce9df; }
+    * { box-sizing:border-box }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif }
+    header { padding:2.2rem max(1.2rem,calc((100vw - 1040px)/2)); background:var(--ink); color:white }
+    header p { margin:.25rem 0 0; color:#d6e2dd }
+    .eyebrow { color:#f1bd9b; font-size:.76rem; font-weight:750; letter-spacing:.14em; text-transform:uppercase }
+    h1 { margin:.4rem 0; font-size:clamp(2rem,5vw,3rem); line-height:1.1; letter-spacing:-.04em }
+    main { width:min(100% - 2rem,1040px); margin:2rem auto 4rem; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr); gap:1.25rem; align-items:start }
+    .card { padding:1.4rem; border:1px solid var(--line); border-radius:18px; background:var(--card); box-shadow:0 12px 30px #173a3609 }
+    h2 { margin:0 0 1rem; font-size:1.18rem }
+    label { display:block; margin:.9rem 0 .35rem; font-weight:650; font-size:.94rem }
+    input,textarea { width:100%; border:1px solid #c9cec6; border-radius:10px; background:white; padding:.75rem .85rem; color:var(--ink); font:inherit }
+    textarea { min-height:88px; resize:vertical }
+    input:focus,textarea:focus { outline:3px solid #bf704733; border-color:var(--accent) }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem }
+    .checks { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; margin-top:.5rem }
+    .check { display:flex; gap:.55rem; align-items:flex-start; padding:.55rem; border:1px solid var(--line); border-radius:10px; color:var(--muted); font-size:.92rem }
+    .check input { width:auto; margin-top:.25rem; accent-color:var(--ink) }
+    .buttons { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem }
+    button { border:0; border-radius:999px; padding:.7rem 1rem; background:var(--ink); color:white; font:650 .92rem system-ui; cursor:pointer }
+    button.secondary { background:#e7ebe5; color:var(--ink) }
+    button:hover { filter:brightness(1.08) }
+    .small { font-size:.84rem; color:var(--muted) }
+    .quote { margin:0 0 1.1rem; padding:1rem; border-left:4px solid var(--accent); background:#f8f0e9; font:italic 1.15rem Georgia,serif }
+    #output { white-space:pre-wrap; min-height:280px; padding:1rem; border:1px dashed #b9c2b8; border-radius:12px; background:#fff; color:#273b36 }
+    .privacy { margin-top:1rem; padding:.75rem; border-radius:10px; background:var(--green); color:#264b3d; font-size:.87rem }
+    footer { grid-column:1/-1; text-align:center; color:var(--muted); font-size:.82rem }
+    @media(max-width:760px) { main { grid-template-columns:1fr } footer { grid-column:auto } }
+    @media print { body { background:white } header { padding:1rem; background:white; color:var(--ink) } header p,.eyebrow { color:var(--muted) } main { display:block; width:100%; margin:1rem 0 } .form-card,.buttons,.privacy,footer { display:none!important } .card { border:0; box-shadow:none; padding:0 } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Angela Ng · Insurance Planner</div>
+  <h1>Client Meeting Prep</h1>
+  <p>A calm, clear way to prepare, listen, and capture the next step.</p>
+</header>
+<main>
+  <section class="card form-card">
+    <h2>Prepare for the conversation</h2>
+    <div class="grid">
+      <div><label for="client">Client name or initials</label><input id="client" autocomplete="off" placeholder="Optional"></div>
+      <div><label for="date">Meeting date</label><input id="date" type="date"></div>
+    </div>
+    <label for="priorities">What matters to the client?</label>
+    <textarea id="priorities" placeholder="Their priorities, concerns, or questions in their own words"></textarea>
+    <label>Before the meeting</label>
+    <div class="checks">
+      <label class="check"><input type="checkbox" value="Review any information the client shared">Review information shared</label>
+      <label class="check"><input type="checkbox" value="Prepare relevant presentation materials">Prepare presentation materials</label>
+      <label class="check"><input type="checkbox" value="Bring questions to clarify the client's needs">Bring questions to clarify needs</label>
+      <label class="check"><input type="checkbox" value="Confirm the meeting time and place">Confirm time and place</label>
+    </div>
+    <label for="questions">Questions to ask</label>
+    <textarea id="questions" placeholder="What would you like to understand during the meeting?"></textarea>
+    <label for="notes">Meeting notes</label>
+    <textarea id="notes" placeholder="Capture what the client says. Separate confirmed details from anything to check."></textarea>
+    <label for="next">Agreed next step</label>
+    <textarea id="next" placeholder="What did you agree to do next, and by when?"></textarea>
+    <div class="buttons">
+      <button id="make">Create meeting summary</button>
+      <button class="secondary" id="clear" type="button">Clear this form</button>
+    </div>
+    <p class="small">Your entries are used only to create the summary shown on this page.</p>
+  </section>
+  <section class="card">
+    <h2>Your meeting sheet</h2>
+    <p class="quote">“Prepare an umbrella before the rain comes.”</p>
+    <div id="output" aria-live="polite">Fill in the details on the left, then select “Create meeting summary.”</div>
+    <div class="buttons">
+      <button class="secondary" id="copy" type="button">Copy summary</button>
+      <button class="secondary" id="print" type="button">Print meeting sheet</button>
+    </div>
+    <div class="privacy">Use this as an organizer, not as a product recommendation. Avoid entering sensitive personal or financial details. Confirm any coverage or policy information through your normal professional process.</div>
+  </section>
+  <footer>Made for Angela’s face-to-face client meetings · Information stays in this browser page.</footer>
+</main>
+<script>
+  const byId = id => document.getElementById(id);
+  const val = id => byId(id).value.trim();
+  byId('make').addEventListener('click', () => {
+    const name = val('client') || 'Client';
+    const date = val('date') ? new Date(val('date') + 'T12:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}) : 'Date not added';
+    const priorities = val('priorities') || 'No priorities recorded yet.';
+    const questions = val('questions') || 'Add the questions you want to ask.';
+    const notes = val('notes') || 'No meeting notes recorded yet.';
+    const next = val('next') || 'Agree and record a next step.';
+    const checks = [...document.querySelectorAll('.check input:checked')].map(x => '☑ ' + x.value);
+    const prep = checks.length ? checks.join('\n') : '☐ Review what the client shared\n☐ Prepare relevant materials';
+    const text = `CLIENT MEETING SHEET\nAngela Ng · Insurance Planner\n\nClient: ${name}\nMeeting date: ${date}\n\nCLIENT PRIORITIES / QUESTIONS\n${priorities}\n\nPREPARATION\n${prep}\n\nQUESTIONS TO ASK\n${questions}\n\nMEETING NOTES\n${notes}\n\nAGREED NEXT STEP\n${next}\n\nPrepare an umbrella before the rain comes.`;
+    byId('output').textContent = text;
+  });
+  byId('clear').addEventListener('click', () => {
+    document.querySelectorAll('input:not([type=checkbox]), textarea').forEach(x => x.value='');
+    document.querySelectorAll('.check input').forEach(x => x.checked=false);
+    byId('output').textContent='Fill in the details on the left, then select “Create meeting summary.”';
+  });
+  byId('copy').addEventListener('click', async () => {
+    const text = byId('output').textContent;
+    try { await navigator.clipboard.writeText(text); byId('copy').textContent='Copied'; setTimeout(()=>byId('copy').textContent='Copy summary',1500); }
+    catch { byId('copy').textContent='Select and copy the summary'; }
+  });
+  byId('print').addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
