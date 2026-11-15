@@ -23,14 +23,19 @@
     label,legend { display:block; margin:.9rem 0 .35rem; font-weight:650; font-size:.94rem }
     fieldset { min-width:0; margin:.9rem 0 0; padding:0; border:0 }
     legend { padding:0; margin:0 0 .35rem }
-    input,textarea { min-width:0; width:100%; border:1px solid #7d8980; border-radius:10px; background:white; padding:.75rem .85rem; color:var(--ink); font:inherit }
+    input,textarea,select { min-width:0; width:100%; border:1px solid #7d8980; border-radius:10px; background:white; padding:.75rem .85rem; color:var(--ink); font:inherit }
     textarea { min-height:88px; resize:vertical }
-    input:focus,textarea:focus { outline:3px solid var(--accent); outline-offset:2px; border-color:var(--accent) }
+    input:focus,textarea:focus,select:focus { outline:3px solid var(--accent); outline-offset:2px; border-color:var(--accent) }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem }
     .grid > div { min-width:0 }
     .checks { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; margin-top:.5rem }
     .check { display:flex; gap:.55rem; align-items:flex-start; margin:0; padding:.55rem; border:1px solid var(--line); border-radius:10px; color:var(--muted); font-size:.92rem }
     .check input { width:auto; margin-top:.25rem; accent-color:var(--ink) }
+    .event-worksheet { margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid var(--line) }
+    .event-worksheet h2 { margin-bottom:.35rem }
+    .event-toggle { min-height:48px; align-items:center; color:var(--ink); cursor:pointer }
+    .event-toggle input { width:20px; height:20px; flex-shrink:0; margin:0 }
+    [hidden] { display:none!important }
     .buttons { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem }
     button { border:0; border-radius:999px; padding:.7rem 1rem; background:var(--ink); color:white; font:650 .92rem system-ui; cursor:pointer }
     button.secondary { background:#e7ebe5; color:var(--ink) }
@@ -85,6 +90,61 @@
     <textarea id="notes" placeholder="Capture what the client says. Separate confirmed details from anything to check."></textarea>
     <label for="next">Agreed next step</label>
     <textarea id="next" placeholder="What did you agree to do next, and by when?"></textarea>
+    <section class="event-worksheet" aria-labelledby="event-heading">
+      <h2 id="event-heading">Optional event worksheet</h2>
+      <p class="small" id="event-help">For team activities, weekly meetings, or bus trips. All event fields are optional. Turn this off to leave event details out of the summary; entries stay in the form until cleared.</p>
+      <label class="check event-toggle" for="include-event"><input id="include-event" type="checkbox" aria-controls="event-fields" aria-describedby="event-help">Include an event worksheet</label>
+      <fieldset id="event-fields" hidden disabled>
+        <legend>Event arrangements</legend>
+        <div class="grid">
+          <div>
+            <label for="event-date">Event date</label>
+            <input id="event-date" type="date" aria-describedby="event-date-error">
+            <p id="event-date-error" class="error" role="alert" hidden></p>
+          </div>
+          <div>
+            <label for="event-time">Event time (local)</label>
+            <input id="event-time" type="time" aria-describedby="event-time-error">
+            <p id="event-time-error" class="error" role="alert" hidden></p>
+          </div>
+        </div>
+        <label for="event-location">Event location</label>
+        <input id="event-location" placeholder="Venue or online meeting link">
+        <label for="event-meeting-point">Meeting point</label>
+        <input id="event-meeting-point" placeholder="Where attendees should gather, or no gathering needed">
+        <label for="event-person-in-charge">Person in charge</label>
+        <input id="event-person-in-charge" placeholder="Name or initials of the coordinator">
+        <div class="grid">
+          <div>
+            <label for="event-confirmation">Confirmation status</label>
+            <select id="event-confirmation">
+              <option value="">Not recorded</option>
+              <option>Pending confirmation</option>
+              <option>Confirmed</option>
+              <option>Cancelled</option>
+            </select>
+          </div>
+          <div>
+            <label for="event-attendees">Attendee count</label>
+            <input id="event-attendees" type="number" min="0" step="1" inputmode="numeric" placeholder="0 or more" aria-describedby="event-attendees-help event-attendees-error">
+            <span id="event-attendees-help" class="small">Use a whole number; leave blank if not known.</span>
+            <p id="event-attendees-error" class="error" role="alert" hidden></p>
+          </div>
+        </div>
+        <label for="event-payment">Payment status</label>
+        <select id="event-payment">
+          <option value="">Not recorded</option>
+          <option>Not required</option>
+          <option>Unpaid</option>
+          <option>Partially paid</option>
+          <option>Paid in full</option>
+          <option>Refund pending</option>
+          <option>Refunded</option>
+        </select>
+        <label for="event-follow-up">Event follow-up items</label>
+        <textarea id="event-follow-up" placeholder="One item per line: action, person responsible, and due date"></textarea>
+      </fieldset>
+    </section>
     <div class="buttons">
       <button id="make" type="submit">Create meeting summary</button>
       <button class="secondary" id="clear" type="button">Clear this form</button>
@@ -113,39 +173,66 @@
     byId('copy').disabled = !enabled;
     byId('print').disabled = !enabled;
   };
-  const clearDateError = () => {
-    byId('date').removeAttribute('aria-invalid');
-    byId('date-error').hidden = true;
-    byId('date-error').textContent = '';
+  const validationMessages = {
+    'date': 'Enter a complete, valid meeting date, or leave it blank.',
+    'event-date': 'Enter a complete, valid event date, or leave it blank.',
+    'event-time': 'Enter a complete, valid event time, or leave it blank.',
+    'event-attendees': 'Enter zero or a positive whole number for attendees, or leave it blank.'
   };
-  byId('meeting-form').addEventListener('input', event => {
+  const clearFieldError = id => {
+    byId(id).removeAttribute('aria-invalid');
+    byId(id + '-error').hidden = true;
+    byId(id + '-error').textContent = '';
+  };
+  const clearErrors = () => Object.keys(validationMessages).forEach(clearFieldError);
+  const syncEventWorksheet = () => {
+    const enabled = byId('include-event').checked;
+    byId('event-fields').hidden = !enabled;
+    byId('event-fields').disabled = !enabled;
+    if (!enabled) Object.keys(validationMessages).filter(id => id !== 'date').forEach(clearFieldError);
+  };
+  const onFormChange = event => {
     summaryRevision++;
-    if (event.target.id === 'date') clearDateError();
+    if (event.target.id === 'include-event') syncEventWorksheet();
+    if (Object.hasOwn(validationMessages, event.target.id)) clearFieldError(event.target.id);
     if (hasSummary) {
       setSummaryActions(false);
       byId('summary-status').textContent = 'The form has changed. Create a new summary before copying or printing.';
     }
-  });
+  };
+  byId('meeting-form').addEventListener('input', onFormChange);
+  byId('meeting-form').addEventListener('change', onFormChange);
+  const formatDate = id => new Date(val(id) + 'T12:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
   byId('meeting-form').addEventListener('submit', event => {
     event.preventDefault();
-    clearDateError();
-    const dateField = byId('date');
-    if (!dateField.validity.valid || (val('date') && Number.isNaN(new Date(val('date') + 'T12:00:00').getTime()))) {
-      dateField.setAttribute('aria-invalid', 'true');
-      byId('date-error').textContent = 'Enter a complete, valid meeting date, or leave it blank.';
-      byId('date-error').hidden = false;
-      dateField.focus();
-      return;
+    clearErrors();
+    const includeEvent = byId('include-event').checked;
+    const fieldsToValidate = includeEvent ? Object.keys(validationMessages) : ['date'];
+    for (const id of fieldsToValidate) {
+      const field = byId(id);
+      const value = val(id);
+      const invalidDate = field.type === 'date' && value && Number.isNaN(new Date(value + 'T12:00:00').getTime());
+      const invalidCount = id === 'event-attendees' && value && (!Number.isSafeInteger(Number(value)) || Number(value) < 0);
+      if (!field.validity.valid || invalidDate || invalidCount) {
+        field.setAttribute('aria-invalid', 'true');
+        byId(id + '-error').textContent = validationMessages[id];
+        byId(id + '-error').hidden = false;
+        setSummaryActions(false);
+        field.focus();
+        return;
+      }
     }
     const name = val('client') || 'Client';
-    const date = val('date') ? new Date(val('date') + 'T12:00:00').toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}) : 'Date not added';
+    const date = val('date') ? formatDate('date') : 'Date not added';
     const priorities = val('priorities') || 'No priorities recorded yet.';
     const questions = val('questions') || 'Add the questions you want to ask.';
     const notes = val('notes') || 'No meeting notes recorded yet.';
     const next = val('next') || 'Agree and record a next step.';
-    const checks = [...document.querySelectorAll('.check input:checked')].map(x => '☑ ' + x.value);
+    const checks = [...document.querySelectorAll('.checks input:checked')].map(x => '☑ ' + x.value);
     const prep = checks.length ? checks.join('\n') : '☐ Review what the client shared\n☐ Prepare relevant materials';
-    const text = `CLIENT MEETING SHEET\nAngela Ng · Insurance Planner\n\nClient: ${name}\nMeeting date: ${date}\n\nCLIENT PRIORITIES / QUESTIONS\n${priorities}\n\nPREPARATION\n${prep}\n\nQUESTIONS TO ASK\n${questions}\n\nMEETING NOTES\n${notes}\n\nAGREED NEXT STEP\n${next}\n\nPrepare an umbrella before the rain comes.`;
+    const eventValue = id => val(id) || 'Not recorded';
+    const eventSheet = includeEvent ? `\n\nEVENT WORKSHEET\nEvent date: ${val('event-date') ? formatDate('event-date') : 'Not recorded'}\nEvent time (local): ${eventValue('event-time')}\nEvent location: ${eventValue('event-location')}\nMeeting point: ${eventValue('event-meeting-point')}\nPerson in charge: ${eventValue('event-person-in-charge')}\nConfirmation status: ${eventValue('event-confirmation')}\nAttendee count: ${eventValue('event-attendees')}\nPayment status: ${eventValue('event-payment')}\n\nEVENT FOLLOW-UP ITEMS\n${eventValue('event-follow-up')}` : '';
+    const text = `CLIENT MEETING SHEET\nAngela Ng · Insurance Planner\n\nClient: ${name}\nMeeting date: ${date}\n\nCLIENT PRIORITIES / QUESTIONS\n${priorities}\n\nPREPARATION\n${prep}\n\nQUESTIONS TO ASK\n${questions}\n\nMEETING NOTES\n${notes}\n\nAGREED NEXT STEP\n${next}${eventSheet}\n\nPrepare an umbrella before the rain comes.`;
     byId('output').textContent = text;
     hasSummary = true;
     summaryRevision++;
@@ -155,7 +242,8 @@
   });
   byId('clear').addEventListener('click', () => {
     byId('meeting-form').reset();
-    clearDateError();
+    syncEventWorksheet();
+    clearErrors();
     hasSummary = false;
     summaryRevision++;
     setSummaryActions(false);
